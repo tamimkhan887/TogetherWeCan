@@ -1,0 +1,119 @@
+"use client";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/shared/theme-toggle";
+import { ProfileDropdown } from "./profile-dropdown";
+import { MobileNavigation } from "./mobile-navigation";
+import { useEvents } from "@/context/events-context";
+import {
+  HeartHandshake,
+  Calendar,
+  Home,
+  LogIn,
+  UserPlus,
+  ShieldCheck,
+  UserCheck,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+
+export function Navbar() {
+  const pathname = usePathname();
+  const { isAuthenticatedPreview, toggleAuthPreview } = useEvents();
+
+  const links = [
+    { label: "Home", href: "/", icon: Home },
+    { label: "Upcoming Events", href: "/events", icon: Calendar },
+  ];
+
+  return (
+    <header className="sticky top-0 z-40 w-full border-b border-border/70 bg-background/85 backdrop-blur-md transition-all">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex h-16 sm:h-20 items-center justify-between gap-4">
+          {/* Brand Logo */}
+          <Link href="/" className="flex items-center gap-2.5 group">
+            <div className="h-10 w-10 rounded-2xl bg-linear-to-br from-emerald-600 to-teal-700 flex items-center justify-center text-white shadow-md shadow-emerald-600/20 group-hover:scale-105 transition-transform">
+              <HeartHandshake className="h-5 w-5" />
+            </div>
+            <div className="flex flex-col">
+              <span className="font-extrabold text-xl leading-none tracking-tight text-foreground">
+                Together<span className="text-emerald-600 dark:text-emerald-400">WeCan</span>
+              </span>
+              <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mt-0.5">
+                Social Development
+              </span>
+            </div>
+          </Link>
+
+          {/* Desktop Navigation Links */}
+          <nav className="hidden md:flex items-center gap-1.5">
+            {links.map((link) => {
+              const isActive = pathname === link.href;
+              const Icon = link.icon;
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={cn(
+                    "flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200",
+                    isActive
+                      ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 font-semibold shadow-2xs"
+                      : "text-foreground/80 hover:text-emerald-600 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/30"
+                  )}
+                >
+                  <Icon className="h-4 w-4" />
+                  <span>{link.label}</span>
+                </Link>
+              );
+            })}
+          </nav>
+
+          {/* Right Action Section */}
+          <div className="flex items-center gap-2 sm:gap-3">
+            <ThemeToggle />
+
+            {/* Authenticated vs Guest Desktop UI */}
+            {isAuthenticatedPreview ? (
+              <div className="hidden sm:flex items-center gap-3">
+                <Link href="/create-event">
+                  <Button
+                    size="sm"
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-xs text-xs font-semibold px-4 h-9"
+                  >
+                    + Create Event
+                  </Button>
+                </Link>
+                <ProfileDropdown />
+              </div>
+            ) : (
+              <div className="hidden sm:flex items-center gap-2">
+                <Link href="/login">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-xs font-medium h-9 rounded-xl px-3 hover:text-emerald-600"
+                  >
+                    <LogIn className="h-3.5 w-3.5 mr-1.5" />
+                    Log In
+                  </Button>
+                </Link>
+                <Link href="/register">
+                  <Button
+                    size="sm"
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-xs text-xs font-semibold px-3.5 h-9"
+                  >
+                    <UserPlus className="h-3.5 w-3.5 mr-1.5" />
+                    Register
+                  </Button>
+                </Link>
+              </div>
+            )}
+
+            {/* Mobile Navigation Drawer Trigger */}
+            <MobileNavigation />
+          </div>
+        </div>
+      </div>
+    </header>
+  );
+}
