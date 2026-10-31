@@ -1,6 +1,5 @@
 "use client";
 
-import React from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
@@ -40,9 +39,9 @@ export function HeroSection() {
   ];
 
   return (
-    <section className="relative overflow-hidden pt-8 pb-16 lg:py-20 border-b border-border/60 bg-gradient-to-b from-emerald-50/60 via-background to-background dark:from-emerald-950/20 dark:via-background dark:to-background">
+    <section className="relative overflow-hidden pt-8 pb-16 lg:py-20 border-b border-border/60 bg-linear-to-b from-emerald-50/60 via-background to-background dark:from-emerald-950/20 dark:via-background dark:to-background">
       {/* Decorative Glows */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-emerald-500/10 dark:bg-emerald-500/5 blur-[120px] rounded-full pointer-events-none" />
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-150 h-75 bg-emerald-500/10 dark:bg-emerald-500/5 blur-[120px] rounded-full pointer-events-none" />
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
@@ -105,7 +104,7 @@ export function HeroSection() {
           <div className="lg:col-span-5 relative">
             <div className="relative mx-auto max-w-md lg:max-w-none">
               {/* Outer Decorative Card */}
-              <div className="relative aspect-[4/3] rounded-3xl overflow-hidden shadow-2xl border-4 border-card bg-muted">
+              <div className="relative aspect-4/3 rounded-3xl overflow-hidden shadow-2xl border-4 border-card bg-muted">
                 <Image
                   src="https://images.unsplash.com/photo-1593113598332-cd288d649433?w=1200&auto=format&fit=crop&q=80"
                   alt="Volunteers distributing relief and food"
@@ -114,15 +113,6 @@ export function HeroSection() {
                   className="object-cover"
                   priority
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-                <div className="absolute bottom-4 left-4 right-4 text-white p-3 rounded-2xl bg-black/40 backdrop-blur-md border border-white/10">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-emerald-300">
-                    Active Drive
-                  </p>
-                  <p className="text-sm font-bold truncate">
-                    Food & Relief Outreach • Old Dhaka
-                  </p>
-                </div>
               </div>
 
               {/* Floating Overlap Card: Quick Stat */}
