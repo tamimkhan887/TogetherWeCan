@@ -4,12 +4,8 @@ import React, { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { loginSchema, LoginFormData } from "@/lib/validations";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useEvents } from "@/context/events-context";
 import {
   HeartHandshake,
   Mail,
@@ -21,53 +17,69 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { toast } from "sonner";
+import { authClient } from "@/lib/auth-client";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { setIsAuthenticatedPreview } = useEvents();
+  const [errors, setErrors] = useState({
+    email: "",
+    password: "",
+  });
+
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<LoginFormData>({
-    resolver: zodResolver(loginSchema),
-    defaultValues: {
-      email: "tanvir.ahmed@example.com",
-      password: "Password123!",
-      rememberMe: true,
-    },
-  });
-
-  const onSubmit = (data: LoginFormData) => {
+  const handleSignInForm = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    const form = e.currentTarget
+    const formEntries = new FormData(form)
+    const user = Object.fromEntries(formEntries.entries()) as { password: string, email: string }
+    const newErrors = {
+      email: "",
+      password: "",
+    };
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(user.email)) {
+      newErrors.email = "Please enter a valid email address.";
+    }
+    if (user.password.length < 8) {
+      newErrors.password = "Password must be at least 8 characters.";
+    } else if (!/[a-z]/.test(user.password)) {
+      newErrors.password = "Password must contain a lowercase letter (a-z).";
+    } else if (!/[0-9]/.test(user.password)) {
+      newErrors.password = "Password must contain a number (0-9).";
+    }
+    setErrors(newErrors);
+    if (Object.values(newErrors).some((error) => error !== "")) {
+      return;
+    }
     setIsLoading(true);
-    // Client-side simulation of login
-    setTimeout(() => {
-      setIsLoading(false);
-      setIsAuthenticatedPreview(true);
-      toast.success("Welcome back, Tanvir!", {
-        description: "You have successfully logged in to the volunteer portal.",
+    const { data, error } = await authClient.signIn.email({
+      ...user
+    })
+    if (data?.user) {
+      setIsLoading(false)
+      toast.success("Welcome Back");
+      form.reset()
+      router.push("/")
+    }
+    if (error) {
+      setIsLoading(false)
+      toast.error(`${error?.message}`)
+    }
+
+  };
+
+  const handleGoogleLogin = async () => {
+    try {
+      const response = await authClient.signIn.social({
+        provider: "google",
+        callbackURL: "/",
       });
-      router.push("/events");
-    }, 800);
-  };
 
-  const handleGoogleLogin = () => {
-    toast.info("Google Authentication (UI Demo)", {
-      description: "Backend OAuth integration will be connected by you later.",
-    });
-    setIsAuthenticatedPreview(true);
-    setTimeout(() => {
-      router.push("/events");
-    }, 600);
-  };
-
-  const handleForgotPassword = () => {
-    toast.info("Password Reset Requested", {
-      description: "A reset link has been dispatched to your email address (Simulated).",
-    });
+      console.log("Login initiated successfully:", response);
+    } catch (error) {
+      console.error("Google login failed:", error);
+    }
   };
 
   return (
@@ -81,7 +93,7 @@ export default function LoginPage() {
           className="object-cover opacity-35"
           priority
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-emerald-950 via-emerald-950/60 to-emerald-950/30" />
+        <div className="absolute inset-0 bg-linear-to-t from-emerald-950 via-emerald-950/60 to-emerald-950/30" />
 
         {/* Top Branding */}
         <div className="relative z-10">
@@ -129,7 +141,7 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {/* Split Layout: Right Form Side */}
+      {/* Right Form Side */}
       <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-10 md:p-16 bg-background">
         <div className="w-full max-w-md space-y-8">
           <div className="space-y-2 text-center lg:text-left">
@@ -187,7 +199,7 @@ export default function LoginPage() {
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={handleSignInForm} className="space-y-4">
             {/* Email Field */}
             <div className="space-y-1.5">
               <label className="text-xs font-semibold text-foreground uppercase tracking-wider">
@@ -197,41 +209,27 @@ export default function LoginPage() {
                 <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   type="email"
+                  name="email"
                   placeholder="name@example.com"
-                  {...register("email")}
-                  className={`pl-10 h-11 ${errors.email ? "border-red-500" : ""}`}
+                  className={`pl-10 h-10`}
+                  required
                 />
               </div>
               {errors.email && (
-                <p className="text-xs text-red-500 font-medium">
-                  {errors.email.message}
-                </p>
+                <p className="text-xs text-red-500 mt-1">{errors.email}</p>
               )}
             </div>
 
             {/* Password Field */}
             <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <label className="text-xs font-semibold text-foreground uppercase tracking-wider">
-                  Password
-                </label>
-                <button
-                  type="button"
-                  onClick={handleForgotPassword}
-                  className="text-xs text-emerald-600 dark:text-emerald-400 hover:underline font-medium"
-                >
-                  Forgot password?
-                </button>
-              </div>
               <div className="relative">
                 <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   type={showPassword ? "text" : "password"}
+                  name="password"
                   placeholder="••••••••"
-                  {...register("password")}
-                  className={`pl-10 pr-10 h-11 ${
-                    errors.password ? "border-red-500" : ""
-                  }`}
+                  className="pl-10"
+                  required
                 />
                 <button
                   type="button"
@@ -245,28 +243,10 @@ export default function LoginPage() {
                     <Eye className="h-4 w-4" />
                   )}
                 </button>
+                {errors.password && (
+                  <p className="text-xs text-red-500 mt-1">{errors.password}</p>
+                )}
               </div>
-              {errors.password && (
-                <p className="text-xs text-red-500 font-medium">
-                  {errors.password.message}
-                </p>
-              )}
-            </div>
-
-            {/* Remember Me */}
-            <div className="flex items-center gap-2 pt-1">
-              <input
-                type="checkbox"
-                id="rememberMe"
-                {...register("rememberMe")}
-                className="h-4 w-4 rounded border-border text-emerald-600 focus:ring-emerald-500"
-              />
-              <label
-                htmlFor="rememberMe"
-                className="text-xs text-muted-foreground cursor-pointer select-none"
-              >
-                Keep me logged in for 30 days
-              </label>
             </div>
 
             {/* Submit Button */}

@@ -1,15 +1,9 @@
 "use client";
-
-import React, { useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { registerSchema, RegisterFormData } from "@/lib/validations";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useEvents } from "@/context/events-context";
 import {
   HeartHandshake,
   User,
@@ -20,57 +14,79 @@ import {
   Image as ImageIcon,
   CheckCircle,
   ArrowRight,
-  ShieldAlert,
 } from "lucide-react";
 import { toast } from "sonner";
+import { authClient } from "@/lib/auth-client";
+import { useRouter } from "next/navigation";
 
 export default function RegisterPage() {
-  const router = useRouter();
-  const { setIsAuthenticatedPreview, updateUserProfile } = useEvents();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-
-  const {
-    register,
-    handleSubmit,
-    watch,
-    formState: { errors },
-  } = useForm<RegisterFormData>({
-    resolver: zodResolver(registerSchema),
-    defaultValues: {
-      name: "",
-      email: "",
-      photoUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80",
-      password: "",
-      confirmPassword: "",
-    },
+  const router = useRouter()
+  const [errors, setErrors] = useState({
+    name: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
   });
 
-  const watchedPassword = watch("password") || "";
-
-  // Password rules validation checklist
-  const hasMinLength = watchedPassword.length >= 6;
-  const hasUppercase = /[A-Z]/.test(watchedPassword);
-  const hasLowercase = /[a-z]/.test(watchedPassword);
-
-  const onSubmit = (data: RegisterFormData) => {
+  const handleFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const form = e.currentTarget
+    const formEntries = new FormData(form);
+    const user = Object.fromEntries(formEntries.entries()) as {
+      name: string, email: string, password: string, photoUrl: string, confirmPassword: string;
+    }
+    const newErrors = {
+      name: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
+    };
+    if (user.name.trim().length < 3) {
+      newErrors.name = "Name must be at least 3 characters.";
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(user.email)) {
+      newErrors.email = "Please enter a valid email address.";
+    }
+    if (user.password.length < 8) {
+      newErrors.password = "Password must be at least 8 characters.";
+    } else if (!/[a-z]/.test(user.password)) {
+      newErrors.password = "Password must contain a lowercase letter (a-z).";
+    } else if (!/[0-9]/.test(user.password)) {
+      newErrors.password = "Password must contain a number (0-9).";
+    }
+    if (user.password !== user.confirmPassword) {
+      newErrors.confirmPassword = "Passwords do not match.";
+    }
+    setErrors(newErrors);
+    if (Object.values(newErrors).some((error) => error !== "")) {
+      return;
+    }
     setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
-      updateUserProfile({
-        name: data.name,
-        email: data.email,
-        avatar: data.photoUrl,
-      });
-      setIsAuthenticatedPreview(true);
-      toast.success("Account created successfully!", {
-        description: `Welcome aboard, ${data.name}! You are now ready to join and create events.`,
-      });
-      router.push("/events");
-    }, 850);
-  };
+    const { data, error } = await authClient.signUp.email({
+      name: user.name,
+      email: user.email,
+      password: user.password,
+      image: user.photoUrl,
+    })
 
+    if (data) {
+      setIsLoading(false)
+      toast.success("Welcome To TogetherWeCan", {
+        description: "Thank You For SignUp In Our Website.",
+      });
+      form.reset()
+      router.push("/")
+    }
+    if (error) {
+      setIsLoading(false)
+      console.log(error)
+      toast.error(`${error?.message}`)
+    }
+
+  }
   return (
     <div className="min-h-[calc(100vh-5rem)] flex items-stretch">
       {/* Left Banner */}
@@ -82,7 +98,7 @@ export default function RegisterPage() {
           className="object-cover opacity-35"
           priority
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-emerald-950 via-emerald-950/70 to-emerald-950/40" />
+        <div className="absolute inset-0 bg-linear-to-t from-emerald-950 via-emerald-950/70 to-emerald-950/40" />
 
         <div className="relative z-10">
           <Link href="/" className="inline-flex items-center gap-2.5">
@@ -138,7 +154,7 @@ export default function RegisterPage() {
             </p>
           </div>
 
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={handleFormSubmit} className="space-y-4">
             {/* Full Name */}
             <div className="space-y-1.5">
               <label className="text-xs font-semibold text-foreground uppercase tracking-wider">
@@ -147,15 +163,15 @@ export default function RegisterPage() {
               <div className="relative">
                 <User className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="e.g. Tanvir Ahmed"
-                  {...register("name")}
-                  className={`pl-10 h-11 ${errors.name ? "border-red-500" : ""}`}
+                  name="name"
+                  type="text"
+                  placeholder="Your Name"
+                  className="pl-10"
+                  required
                 />
               </div>
               {errors.name && (
-                <p className="text-xs text-red-500 font-medium">
-                  {errors.name.message}
-                </p>
+                <p className="text-xs text-red-500 mt-1">{errors.name}</p>
               )}
             </div>
 
@@ -167,37 +183,29 @@ export default function RegisterPage() {
               <div className="relative">
                 <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
+                  name="email"
                   type="email"
                   placeholder="name@example.com"
-                  {...register("email")}
-                  className={`pl-10 h-11 ${errors.email ? "border-red-500" : ""}`}
+                  className="pl-10"
+                  required
                 />
+
               </div>
               {errors.email && (
-                <p className="text-xs text-red-500 font-medium">
-                  {errors.email.message}
-                </p>
+                <p className="text-xs text-red-500 mt-1">{errors.email}</p>
               )}
             </div>
 
-            {/* Photo URL */}
             <div className="space-y-1.5">
               <label className="text-xs font-semibold text-foreground uppercase tracking-wider">
                 Photo URL <span className="text-red-500">*</span>
               </label>
               <div className="relative">
                 <ImageIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="https://images.unsplash.com/..."
-                  {...register("photoUrl")}
-                  className={`pl-10 h-11 ${errors.photoUrl ? "border-red-500" : ""}`}
-                />
+                <Input type="text" name="photoUrl"
+                  placeholder="Enter Image Url"
+                  className="pl-10" />
               </div>
-              {errors.photoUrl && (
-                <p className="text-xs text-red-500 font-medium">
-                  {errors.photoUrl.message}
-                </p>
-              )}
             </div>
 
             {/* Passwords in 2 columns on desktop */}
@@ -210,12 +218,11 @@ export default function RegisterPage() {
                 <div className="relative">
                   <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
+                    name="password"
                     type={showPassword ? "text" : "password"}
                     placeholder="••••••••"
-                    {...register("password")}
-                    className={`pl-10 pr-10 h-11 ${
-                      errors.password ? "border-red-500" : ""
-                    }`}
+                    className="pl-10"
+                    required
                   />
                   <button
                     type="button"
@@ -231,9 +238,7 @@ export default function RegisterPage() {
                   </button>
                 </div>
                 {errors.password && (
-                  <p className="text-xs text-red-500 font-medium">
-                    {errors.password.message}
-                  </p>
+                  <p className="text-xs text-red-500 mt-1">{errors.password}</p>
                 )}
               </div>
 
@@ -245,12 +250,11 @@ export default function RegisterPage() {
                 <div className="relative">
                   <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
+                    name="confirmPassword"
                     type={showConfirmPassword ? "text" : "password"}
                     placeholder="••••••••"
-                    {...register("confirmPassword")}
-                    className={`pl-10 pr-10 h-11 ${
-                      errors.confirmPassword ? "border-red-500" : ""
-                    }`}
+                    className="pl-10"
+                    required
                   />
                   <button
                     type="button"
@@ -266,43 +270,10 @@ export default function RegisterPage() {
                   </button>
                 </div>
                 {errors.confirmPassword && (
-                  <p className="text-xs text-red-500 font-medium">
-                    {errors.confirmPassword.message}
+                  <p className="text-xs text-red-500 mt-1">
+                    {errors.confirmPassword}
                   </p>
                 )}
-              </div>
-            </div>
-
-            {/* Password Requirements Checklist */}
-            <div className="p-3.5 rounded-xl bg-muted/60 border border-border/80 text-xs space-y-1.5">
-              <span className="font-semibold text-foreground block mb-1">
-                Password Requirements:
-              </span>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                <div
-                  className={`flex items-center gap-1.5 ${
-                    hasMinLength ? "text-emerald-600 dark:text-emerald-400 font-medium" : "text-muted-foreground"
-                  }`}
-                >
-                  <CheckCircle className="h-3.5 w-3.5" />
-                  <span>Min 6 chars</span>
-                </div>
-                <div
-                  className={`flex items-center gap-1.5 ${
-                    hasUppercase ? "text-emerald-600 dark:text-emerald-400 font-medium" : "text-muted-foreground"
-                  }`}
-                >
-                  <CheckCircle className="h-3.5 w-3.5" />
-                  <span>1 uppercase letter</span>
-                </div>
-                <div
-                  className={`flex items-center gap-1.5 ${
-                    hasLowercase ? "text-emerald-600 dark:text-emerald-400 font-medium" : "text-muted-foreground"
-                  }`}
-                >
-                  <CheckCircle className="h-3.5 w-3.5" />
-                  <span>1 lowercase letter</span>
-                </div>
               </div>
             </div>
 
