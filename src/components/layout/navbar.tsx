@@ -5,27 +5,30 @@ import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { ProfileDropdown } from "./profile-dropdown";
 import { MobileNavigation } from "./mobile-navigation";
-import { useEvents } from "@/context/events-context";
 import {
   HeartHandshake,
   Calendar,
   Home,
   LogIn,
   UserPlus,
-  ShieldCheck,
-  UserCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { authClient } from "@/lib/auth-client";
+import { Avatar, AvatarFallback, AvatarImage } from "@radix-ui/react-avatar";
 
 export function Navbar() {
   const pathname = usePathname();
-  const { isAuthenticatedPreview, toggleAuthPreview } = useEvents();
-
   const links = [
     { label: "Home", href: "/", icon: Home },
     { label: "Upcoming Events", href: "/events", icon: Calendar },
   ];
-
+  const { data: session } = authClient.useSession()
+  const user = session?.user
+  const initials = user?.name
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase();
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border/70 bg-background/85 backdrop-blur-md transition-all">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -57,8 +60,8 @@ export function Navbar() {
                   className={cn(
                     "flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200",
                     isActive
-                      ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 font-semibold shadow-2xs"
-                      : "text-foreground/80 hover:text-emerald-600 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/30"
+                      ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 font-semibold shadow-2xs text-nowrap"
+                      : "text-foreground/80 hover:text-emerald-600 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/30 text-nowrap"
                   )}
                 >
                   <Icon className="h-4 w-4" />
@@ -73,20 +76,31 @@ export function Navbar() {
             <ThemeToggle />
 
             {/* Authenticated vs Guest Desktop UI */}
-            {isAuthenticatedPreview ? (
-              <div className="hidden sm:flex items-center gap-3">
-                <Link href="/create-event">
-                  <Button
-                    size="sm"
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-xs text-xs font-semibold px-4 h-9"
-                  >
-                    + Create Event
-                  </Button>
-                </Link>
-                <ProfileDropdown />
-              </div>
-            ) : (
-              <div className="hidden sm:flex items-center gap-2">
+
+            {
+              user ? <div>
+                <div className="hidden sm:flex items-center gap-3">
+                  <Link href="/create-event">
+                    <Button
+                      size="sm"
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-xs text-xs font-semibold px-4 h-9"
+                    >
+                      + Create Event
+                    </Button>
+                  </Link>
+                  <ProfileDropdown />
+                </div>
+                <div className="flex sm:hidden">
+                  <Link href='/profile'>
+                    <Avatar className="w-7 h-7 flex sm:hidden">
+                      <AvatarImage className="rounded-2xl" src={user.image as string} alt={user.name} />
+                      <AvatarFallback className="text-[16px] bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 rounded-2xl py-1">
+                        {initials}
+                      </AvatarFallback>
+                    </Avatar>
+                  </Link>
+                </div>
+              </div> : <div className="hidden sm:flex items-center gap-2">
                 <Link href="/login">
                   <Button
                     variant="ghost"
@@ -107,10 +121,11 @@ export function Navbar() {
                   </Button>
                 </Link>
               </div>
-            )}
-
+            }
             {/* Mobile Navigation Drawer Trigger */}
-            <MobileNavigation />
+            <div className="flex md:hidden">
+              <MobileNavigation />
+            </div>
           </div>
         </div>
       </div>

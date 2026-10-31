@@ -1,6 +1,5 @@
 "use client";
 
-import React from "react";
 import Link from "next/link";
 import {
   DropdownMenu,
@@ -12,7 +11,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { useEvents } from "@/context/events-context";
 import {
   CalendarPlus,
   CalendarCheck2,
@@ -22,15 +20,24 @@ import {
   ChevronDown,
 } from "lucide-react";
 import { toast } from "sonner";
+import { authClient } from "@/lib/auth-client";
+import { useRouter } from "next/navigation";
+
 
 export function ProfileDropdown() {
-  const { currentUser, setIsAuthenticatedPreview } = useEvents();
+  const router = useRouter()
+  const { data: session } = authClient.useSession()
+  const currentUser = session?.user
 
-  const handleLogout = () => {
-    setIsAuthenticatedPreview(false);
-    toast.info("Logged out from preview session", {
-      description: "Switched to guest view mode.",
-    });
+  const handleLogout = async () => {
+    await authClient.signOut({
+      fetchOptions: {
+        onSuccess: () => {
+          router.push("/login");
+          toast.info("Logged SuccessFul");
+        },
+      }
+    })
   };
 
   if (!currentUser) return null;
@@ -49,12 +56,12 @@ export function ProfileDropdown() {
           className="relative flex items-center gap-2 pl-2 pr-2.5 h-10 rounded-full hover:bg-emerald-50 dark:hover:bg-emerald-950/40 border border-border/60"
         >
           <Avatar className="h-7 w-7 ring-2 ring-emerald-500/40">
-            <AvatarImage src={currentUser.avatar} alt={currentUser.name} />
+            <AvatarImage src={currentUser.image as string} alt={currentUser.name} />
             <AvatarFallback className="text-[10px] bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
               {initials}
             </AvatarFallback>
           </Avatar>
-          <span className="text-xs font-semibold max-w-[100px] truncate hidden sm:inline-block">
+          <span className="text-xs font-semibold max-w-25 truncate hidden sm:inline-block">
             {currentUser.name}
           </span>
           <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />

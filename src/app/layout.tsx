@@ -63,7 +63,7 @@ export default function RootLayout({
             </React.Suspense>
             <main className="flex-1">{children}</main>
             <Footer />
-            <Toaster position="top-right" richColors closeButton />
+            <Toaster position="bottom-center" richColors closeButton />
           </EventsProvider>
         </ThemeProvider>
       </body>

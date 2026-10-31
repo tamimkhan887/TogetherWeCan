@@ -1,8 +1,7 @@
 "use client";
-
 import React, { useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   Sheet,
   SheetContent,
@@ -11,8 +10,6 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { ThemeToggle } from "@/components/shared/theme-toggle";
-import { useEvents } from "@/context/events-context";
 import {
   Menu,
   HeartHandshake,
@@ -24,16 +21,17 @@ import {
   User,
   LogIn,
   UserPlus,
-  ToggleLeft,
-  ToggleRight,
+  LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { authClient } from "@/lib/auth-client";
+import { toast } from "sonner";
 
 export function MobileNavigation() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
-  const { isAuthenticatedPreview, toggleAuthPreview, currentUser } = useEvents();
-
+  const { data: session } = authClient.useSession()
+  const currentUser = session?.user
   const navLinks = [
     { label: "Home", href: "/", icon: Home },
     { label: "Upcoming Events", href: "/events", icon: Calendar },
@@ -45,8 +43,19 @@ export function MobileNavigation() {
     { label: "Joined Events", href: "/joined-events", icon: CheckCircle2 },
     { label: "Profile", href: "/profile", icon: User },
   ];
+  const router = useRouter()
 
   const closeSheet = () => setOpen(false);
+  const handleLogout = async () => {
+    await authClient.signOut({
+      fetchOptions: {
+        onSuccess: () => {
+          router.push("/login");
+          toast.info("Logged SuccessFul");
+        },
+      }
+    })
+  };
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -61,7 +70,7 @@ export function MobileNavigation() {
         </Button>
       </SheetTrigger>
 
-      <SheetContent side="right" className="w-[300px] sm:w-[360px] p-0 flex flex-col justify-between">
+      <SheetContent side="right" className="w-75 sm:w-90 p-0 flex flex-col justify-between">
         <div className="p-6 overflow-y-auto">
           {/* Header */}
           <SheetHeader className="text-left pb-6 border-b border-border/60">
@@ -71,7 +80,7 @@ export function MobileNavigation() {
                 onClick={closeSheet}
                 className="flex items-center gap-2.5 group"
               >
-                <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-emerald-600 to-teal-700 flex items-center justify-center text-white shadow-md shadow-emerald-500/20 group-hover:scale-105 transition-transform">
+                <div className="h-9 w-9 rounded-xl bg-linear-to-br from-emerald-600 to-teal-700 flex items-center justify-center text-white shadow-md shadow-emerald-500/20 group-hover:scale-105 transition-transform">
                   <HeartHandshake className="h-5 w-5" />
                 </div>
                 <div className="flex flex-col">
@@ -115,7 +124,7 @@ export function MobileNavigation() {
             </div>
 
             {/* Authenticated Links if logged-in preview */}
-            {isAuthenticatedPreview && (
+            {currentUser && (
               <div className="space-y-1 pt-2 border-t border-border/60">
                 <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider px-3">
                   Volunteer Dashboard
@@ -140,11 +149,15 @@ export function MobileNavigation() {
                     </Link>
                   );
                 })}
+                <div className="flex items-center text-red-600 dark:text-red-400 focus:bg-red-50 dark:focus:bg-red-950/40 cursor-pointer py-2 ml-4" onClick={handleLogout}>
+                  <LogOut className="h-4 w-4 mr-2" />
+                  <span>Log out</span>
+                </div>
               </div>
             )}
 
             {/* Auth Buttons if guest */}
-            {!isAuthenticatedPreview && (
+            {!currentUser && (
               <div className="pt-4 space-y-2 border-t border-border/60">
                 <Link href="/login" onClick={closeSheet} className="block w-full">
                   <Button variant="outline" className="w-full justify-start gap-2 h-11">
@@ -160,29 +173,6 @@ export function MobileNavigation() {
                 </Link>
               </div>
             )}
-          </div>
-        </div>
-
-        {/* Footer info inside Drawer */}
-        <div className="p-4 border-t border-border/60 bg-muted/30 space-y-3">
-          {/* Auth State Preview Switcher */}
-          <button
-            onClick={toggleAuthPreview}
-            className="w-full flex items-center justify-between p-2 rounded-lg bg-card border border-border text-xs text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <span className="font-medium">
-              Demo State: {isAuthenticatedPreview ? "Volunteer (Logged in)" : "Guest"}
-            </span>
-            {isAuthenticatedPreview ? (
-              <ToggleRight className="h-5 w-5 text-emerald-600" />
-            ) : (
-              <ToggleLeft className="h-5 w-5 text-muted-foreground" />
-            )}
-          </button>
-
-          <div className="flex items-center justify-between pt-1">
-            <span className="text-xs text-muted-foreground font-medium">Theme Mode</span>
-            <ThemeToggle />
           </div>
         </div>
       </SheetContent>
