@@ -1,4 +1,3 @@
-import React from "react";
 import { HeroSection } from "@/components/home/hero-section";
 import { FeaturesSection } from "@/components/home/features-section";
 import { RecentUpcomingEvents } from "@/components/home/recent-upcoming-events";
