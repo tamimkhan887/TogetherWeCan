@@ -28,6 +28,9 @@ import {
   Award,
   Shirt,
   Heart,
+  Ban,
+  ShieldAlert,
+  ArrowRight,
 } from "lucide-react";
 
 interface SingleEventDetailsProps {
@@ -600,11 +603,11 @@ export default function SingleEventDetails({ event }: SingleEventDetailsProps) {
               {isOrganizer ? (
                 <div className="mb-5 p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800/80 text-amber-900 dark:text-amber-200">
                   <div className="flex items-start gap-3">
-                    <ShieldCheck className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                    <ShieldAlert className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
                     <div>
                       <h4 className="text-sm font-bold">You Organized This Event</h4>
                       <p className="text-xs text-amber-700 dark:text-amber-300/90 mt-1">
-                        As the organizer of this event, you cannot register as a volunteer for your own event.
+                        As the organizer of this event, you cannot register as a volunteer for your own event. The join button below is disabled.
                       </p>
                     </div>
                   </div>
@@ -626,16 +629,25 @@ export default function SingleEventDetails({ event }: SingleEventDetailsProps) {
               {/* Action Buttons */}
               <div className="space-y-3">
                 {isOrganizer ? (
-                  <div className="space-y-2">
-                    <Link
-                      href="/manage-events"
-                      className="w-full h-12 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm transition-all inline-flex items-center justify-center gap-2 shadow-sm"
+                  <div className="space-y-2.5">
+                    <Button
+                      disabled
+                      className="w-full h-12 rounded-2xl bg-muted text-muted-foreground font-semibold text-sm cursor-not-allowed border border-border opacity-70 select-none shadow-none"
+                      title="You are the organizer of this event and cannot join it"
                     >
-                      Manage This Event →
-                    </Link>
-                    <p className="text-[11px] text-center text-muted-foreground">
+                      <Ban className="w-4 h-4 mr-2 text-rose-500" />
+                      Join This Event (Disabled for Organizer)
+                    </Button>
+                    <p className="text-xs text-center text-amber-600 dark:text-amber-400 font-medium">
                       Organizers cannot join their own event as a volunteer.
                     </p>
+                    <Link
+                      href="/manage-events"
+                      className="inline-flex items-center justify-center gap-1.5 w-full text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:underline pt-1"
+                    >
+                      <span>Manage this event in dashboard</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </Link>
                   </div>
                 ) : isJoined ? (
                   <Link
