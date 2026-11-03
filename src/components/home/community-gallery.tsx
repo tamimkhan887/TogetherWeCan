@@ -1,8 +1,52 @@
 import React from "react";
 import Image from "next/image";
 import { SectionHeading } from "@/components/shared/section-heading";
-import { galleryItems } from "@/lib/mock-data";
-import { MapPin, Camera } from "lucide-react";
+import { MapPin } from "lucide-react";
+
+const galleryItems = [
+  {
+    id: 1,
+    title: "Tree Plantation Drive",
+    location: "Dhanmondi Lake, Dhaka",
+    image: "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=800&auto=format&fit=crop&q=80",
+    category: "Plantation",
+  },
+  {
+    id: 2,
+    title: "Winter Clothes Distribution",
+    location: "Mirpur 10, Dhaka",
+    image: "https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?w=800&auto=format&fit=crop&q=80",
+    category: "Donation",
+  },
+  {
+    id: 3,
+    title: "Hot Food Distribution",
+    location: "Sadarghat, Old Dhaka",
+    image: "https://images.unsplash.com/photo-1593113598332-cd288d649433?w=800&auto=format&fit=crop&q=80",
+    category: "Donation",
+  },
+  {
+    id: 4,
+    title: "Neighborhood Clean-up",
+    location: "Uttara Sector 7, Dhaka",
+    image: "https://images.unsplash.com/photo-1618477461853-cf6ed80faba5?w=800&auto=format&fit=crop&q=80",
+    category: "Cleanup",
+  },
+  {
+    id: 5,
+    title: "Free Healthcare & Eye Camp",
+    location: "Mymensingh Rural Center",
+    image: "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800&auto=format&fit=crop&q=80",
+    category: "Healthcare",
+  },
+  {
+    id: 6,
+    title: "Youth Literacy & Books Drive",
+    location: "Rajshahi",
+    image: "https://images.unsplash.com/photo-1509062522246-3755977927d7?w=800&auto=format&fit=crop&q=80",
+    category: "Education",
+  },
+];
 
 export function CommunityGallery() {
   return (

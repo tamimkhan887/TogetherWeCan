@@ -3,7 +3,6 @@ import * as React from "react";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/providers/theme-provider";
-import { EventsProvider } from "@/context/events-context";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
 import { Toaster } from "@/components/ui/sonner";
@@ -57,14 +56,12 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <EventsProvider>
-            <React.Suspense fallback={<div className="h-16 sm:h-20 border-b border-border/70" />}>
-              <Navbar />
-            </React.Suspense>
-            <main className="flex-1">{children}</main>
-            <Footer />
-            <Toaster position="bottom-center" richColors closeButton />
-          </EventsProvider>
+          <React.Suspense fallback={<div className="h-16 sm:h-20 border-b border-border/70" />}>
+            <Navbar />
+          </React.Suspense>
+          <main className="flex-1">{children}</main>
+          <Footer />
+          <Toaster position="bottom-center" richColors closeButton />
         </ThemeProvider>
       </body>
     </html>

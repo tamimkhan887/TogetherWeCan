@@ -3,9 +3,12 @@ import { EventGridSkeleton } from "@/components/shared/loading-skeleton";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { Suspense } from "react";
+import { connection } from "next/server";
 
 async function ManageEventsData() {
   try {
+    await connection();
+
     const session = await auth.api.getSession({
       headers: await headers(),
     });
@@ -17,7 +20,9 @@ async function ManageEventsData() {
     }
 
     const backendUrl =
-      process.env.BACKEND_URL || "http://localhost:8000";
+      process.env.BACKEND_URL ||
+      process.env.NEXT_PUBLIC_BACKEND_URL ||
+      "http://localhost:8000";
 
     const res = await fetch(
       `${backendUrl}/upcomingevents/${encodeURIComponent(emailUser)}`,

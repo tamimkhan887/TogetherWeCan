@@ -6,6 +6,7 @@ export type EventCategory =
   | "Healthcare"
   | "Community Support"
   | "Other";
+
 export interface EventTypes {
   _id: string;
   title: string;
@@ -17,8 +18,10 @@ export interface EventTypes {
   description: string;
   organizerName: string;
   organizerEmail: string;
-  organizerAvatar: string
-};
+  organizerAvatar?: string;
+}
+
+export type Event = EventTypes;
 
 export interface User {
   id: string;
@@ -37,7 +40,23 @@ export interface JoinedEvent {
   userId: string;
   joinedAt: string;
   status: "confirmed" | "attended" | "cancelled";
-  event?: Event;
+  event?: EventTypes;
+}
+
+export interface UserJoinedEvent {
+  _id: string;
+  eventId: string;
+  userEmail: string;
+  userName?: string;
+  userAvatar?: string;
+  eventTitle: string;
+  eventDate: string;
+  eventLocation: string;
+  eventImage: string;
+  eventCategory?: string;
+  organizerName?: string;
+  organizerEmail?: string;
+  joinedAt?: string;
 }
 
 export interface EventFilterState {

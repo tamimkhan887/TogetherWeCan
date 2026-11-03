@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   ArrowRight,
@@ -12,15 +13,27 @@ import {
   ShieldCheck,
   CheckCircle,
 } from "lucide-react";
-import { useEvents } from "@/context/events-context";
 
 export function HeroSection() {
-  const { events } = useEvents();
+  const [eventCount, setEventCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    const backendUrl =
+      process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
+    fetch(`${backendUrl}/upcomingevents`)
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setEventCount(data.length);
+        }
+      })
+      .catch(() => setEventCount(null));
+  }, []);
 
   const stats = [
     {
       label: "Events Organized",
-      value: `${events.length}+`,
+      value: eventCount !== null ? `${eventCount}+` : "25+",
       icon: Calendar,
       description: "Across 8 divisions",
     },
@@ -48,97 +61,109 @@ export function HeroSection() {
           {/* Left Column: Copy & Actions */}
           <div className="lg:col-span-7 space-y-6 text-center lg:text-left">
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wider bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300 border border-emerald-300/40 shadow-2xs">
-              <Sparkles className="h-3.5 w-3.5" />
-              <span>Together For A Better Tomorrow</span>
+              <Sparkles className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+              <span>Small Actions. Real Community Impact.</span>
             </div>
 
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-foreground leading-[1.12]">
-              Small Actions. <br className="hidden sm:inline" />
-              Big Changes. <br className="hidden sm:inline" />
-              <span className="text-emerald-600 dark:text-emerald-400">
-                Stronger Communities.
-              </span>
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight text-foreground leading-[1.1]">
+              Unite for Good.{" "}
+              <span className="bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-500 bg-clip-text text-transparent">
+                Together We Can
+              </span>{" "}
+              Change Lives.
             </h1>
 
-            <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto lg:mx-0 leading-relaxed font-normal">
-              Discover meaningful opportunities, connect with passionate volunteers,
-              and make a positive impact in your community across Bangladesh.
+            <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto lg:mx-0 leading-relaxed font-normal">
+              Discover and organize grassroots social development initiatives
+              across Bangladesh. From winter blanket drives in northern
+              districts to urban tree plantations and clean river campaigns.
             </p>
 
-            {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-2">
+            {/* CTA Buttons */}
+            <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 sm:gap-4 pt-2">
               <Link href="/events" className="w-full sm:w-auto">
                 <Button
                   size="lg"
-                  className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-600/20 rounded-xl px-7 h-12 text-base font-semibold group"
+                  className="w-full sm:w-auto rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold shadow-md shadow-emerald-600/20 px-7 h-12 text-sm sm:text-base group"
                 >
-                  Explore Events
-                  <ArrowRight className="h-4 w-4 ml-2 transition-transform group-hover:translate-x-1" />
+                  <span>Explore All Drives</span>
+                  <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
                 </Button>
               </Link>
+
               <Link href="/create-event" className="w-full sm:w-auto">
                 <Button
-                  size="lg"
                   variant="outline"
-                  className="w-full sm:w-auto rounded-xl px-7 h-12 text-base font-semibold border-border hover:bg-secondary"
+                  size="lg"
+                  className="w-full sm:w-auto rounded-xl border-border hover:bg-muted text-foreground font-semibold px-7 h-12 text-sm sm:text-base"
                 >
-                  Create an Event
+                  <span>Host an Initiative</span>
                 </Button>
               </Link>
             </div>
 
-            {/* Trust highlights */}
-            <div className="pt-4 flex flex-wrap items-center justify-center lg:justify-start gap-y-2 gap-x-6 text-xs text-muted-foreground font-medium">
-              <div className="flex items-center gap-1.5">
-                <CheckCircle className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-                <span>100% Free Volunteer Platform</span>
-              </div>
+            {/* Trust Badges */}
+            <div className="pt-4 flex flex-wrap items-center justify-center lg:justify-start gap-6 text-xs text-muted-foreground border-t border-border/60">
               <div className="flex items-center gap-1.5">
                 <ShieldCheck className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-                <span>Verified Local Causes</span>
+                <span>Verified Local Drives</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <CheckCircle className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                <span>Zero Platform Fees</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <Users className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                <span>100% Volunteer Driven</span>
               </div>
             </div>
           </div>
 
-          {/* Right Column: Hero Visual Showcase */}
+          {/* Right Column: Hero Visual Stack */}
           <div className="lg:col-span-5 relative">
             <div className="relative mx-auto max-w-md lg:max-w-none">
-              {/* Outer Decorative Card */}
-              <div className="relative aspect-4/3 rounded-3xl overflow-hidden shadow-2xl border-4 border-card bg-muted">
+              {/* Main Visual Image Card */}
+              <div className="relative aspect-[4/3] rounded-3xl overflow-hidden shadow-2xl border border-white/20 dark:border-border/60 group">
                 <Image
                   src="https://images.unsplash.com/photo-1593113598332-cd288d649433?w=1200&auto=format&fit=crop&q=80"
-                  alt="Volunteers distributing relief and food"
+                  alt="Volunteers distributing relief packages in Bangladesh"
                   fill
-                  sizes="(max-width: 1024px) 100vw, 50vw"
-                  className="object-cover"
                   priority
+                  className="object-cover group-hover:scale-105 transition-transform duration-700"
                 />
-              </div>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
 
-              {/* Floating Overlap Card: Quick Stat */}
-              <div className="absolute -bottom-6 -left-6 sm:-left-8 bg-card border border-border/80 p-4 rounded-2xl shadow-xl flex items-center gap-3.5 backdrop-blur-md">
-                <div className="h-11 w-11 rounded-xl bg-emerald-100 dark:bg-emerald-950 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0">
-                  <HeartHandshake className="h-6 w-6" />
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground font-medium">Volunteers Joined</p>
-                  <p className="text-lg font-extrabold text-foreground">+250 this week</p>
+                {/* Floating On-Image Card */}
+                <div className="absolute bottom-5 left-5 right-5 p-4 rounded-2xl bg-white/95 dark:bg-card/90 backdrop-blur-md shadow-lg border border-white/20 dark:border-border/50 flex items-center justify-between">
+                  <div>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+                      Ongoing Initiative
+                    </span>
+                    <h4 className="font-bold text-sm text-foreground line-clamp-1">
+                      Relief Drive • Bangladesh
+                    </h4>
+                  </div>
+                  <Link href="/events">
+                    <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:underline flex items-center">
+                      Details <ArrowRight className="h-3 w-3 ml-1" />
+                    </span>
+                  </Link>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Community Impact Statistics Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 pt-16 sm:pt-20">
-          {stats.map((stat) => {
+        {/* Global Impact Counter Strip */}
+        <div className="mt-14 lg:mt-20 grid grid-cols-1 sm:grid-cols-3 gap-4 lg:gap-6">
+          {stats.map((stat, idx) => {
             const Icon = stat.icon;
             return (
               <div
-                key={stat.label}
-                className="bg-card border border-border/70 p-6 rounded-2xl shadow-xs flex items-center gap-4 hover:border-emerald-500/40 transition-colors"
+                key={idx}
+                className="flex items-center gap-4 p-5 rounded-2xl border border-border/80 bg-card/60 backdrop-blur-xs shadow-xs hover:border-emerald-500/40 transition-colors"
               >
-                <div className="h-12 w-12 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0">
+                <div className="h-12 w-12 rounded-xl bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 flex items-center justify-center shrink-0">
                   <Icon className="h-6 w-6" />
                 </div>
                 <div>

@@ -1,10 +1,15 @@
 import AllUpcomingEvents from "@/components/events/all-events";
 import { EventGridSkeleton } from "@/components/shared/loading-skeleton";
 import { Suspense } from "react";
+import { connection } from "next/server";
 
 const upcomingeventsdata = async () => {
   try {
-    const res = await fetch(`${process.env.BACKEND_URL}/upcomingevents`, {
+    const backendUrl =
+      process.env.BACKEND_URL ||
+      process.env.NEXT_PUBLIC_BACKEND_URL ||
+      "http://localhost:8000";
+    const res = await fetch(`${backendUrl}/upcomingevents`, {
       cache: "no-store",
     });
     if (!res.ok) {
@@ -19,6 +24,7 @@ const upcomingeventsdata = async () => {
 };
 
 async function UpcomingEventsData() {
+  await connection();
   const data = await upcomingeventsdata();
 
   return <AllUpcomingEvents upcomingeventsdata={data} />;
