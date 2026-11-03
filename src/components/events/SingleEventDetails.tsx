@@ -63,6 +63,16 @@ export default function SingleEventDetails({ event }: SingleEventDetailsProps) {
       session.user.email.trim().toLowerCase() === event.organizerEmail.trim().toLowerCase()
   );
 
+  // Check if the event date has already passed
+  const isPast = (() => {
+    try {
+      const d = new Date(event?.date);
+      return !isNaN(d.getTime()) && d.getTime() < Date.now();
+    } catch {
+      return false;
+    }
+  })();
+
   const backendUrl =
     process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
 
@@ -158,6 +168,14 @@ export default function SingleEventDetails({ event }: SingleEventDetailsProps) {
     if (isOrganizer) {
       toast.error("Organizer Restriction", {
         description: "You cannot join an event that you organized.",
+      });
+      return;
+    }
+
+    // Past events are closed
+    if (isPast) {
+      toast.error("Event Closed", {
+        description: "This event has already taken place and registrations are closed.",
       });
       return;
     }
@@ -334,10 +352,17 @@ export default function SingleEventDetails({ event }: SingleEventDetailsProps) {
 
           {/* Badges on Hero */}
           <div className="absolute top-5 left-5 flex flex-wrap gap-2">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-emerald-500 text-white shadow-md backdrop-blur-md">
-              <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
-              Upcoming Event
-            </span>
+            {isPast ? (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-slate-800/90 text-slate-100 border border-white/20 shadow-md backdrop-blur-md">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                Completed Event
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-emerald-500 text-white shadow-md backdrop-blur-md">
+                <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
+                Upcoming Event
+              </span>
+            )}
             <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-black/60 text-white border border-white/20 backdrop-blur-md">
               {event.category}
             </span>
@@ -570,177 +595,266 @@ export default function SingleEventDetails({ event }: SingleEventDetailsProps) {
         {/* Right Column / Sticky Action Box (4 cols) */}
         <div className="lg:col-span-4 space-y-6">
           <div className="sticky top-24 space-y-6">
-            {/* Join / Status Action Box */}
-            <div className="p-6 rounded-3xl bg-card border border-border shadow-md">
-              {/* Capacity Progress Bar */}
-              <div className="mb-6">
-                <div className="flex items-center justify-between text-xs font-semibold mb-2">
-                  <span className="text-muted-foreground">Volunteer Capacity</span>
-                  <span className={isFull ? "text-rose-600 font-bold" : "text-emerald-600 dark:text-emerald-400"}>
-                    {isFull
-                      ? "Capacity Reached"
-                      : `${spotsRemaining} spot${spotsRemaining === 1 ? "" : "s"} left`}
-                  </span>
+            {isPast ? (
+              /* Past / Concluded Event Info Card (No Join Section) */
+              <div className="p-6 rounded-3xl bg-card border border-border shadow-md space-y-5">
+                <div className="flex items-center gap-3 pb-4 border-b border-border/70">
+                  <div className="w-10 h-10 rounded-2xl bg-slate-100 dark:bg-slate-800/90 border border-border flex items-center justify-center text-slate-600 dark:text-slate-300 shrink-0">
+                    <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+                  </div>
+                  <div>
+                    <h3 className="text-base sm:text-lg font-bold text-foreground">
+                      Event Concluded
+                    </h3>
+                    <p className="text-xs text-muted-foreground">
+                      Completed on {formattedDate}
+                    </p>
+                  </div>
                 </div>
 
-                <div className="h-2.5 w-full bg-muted rounded-full overflow-hidden">
-                  <div
-                    className={`h-full transition-all duration-500 rounded-full ${
-                      isFull
-                        ? "bg-rose-500"
-                        : "bg-linear-to-r from-emerald-500 to-teal-500"
-                    }`}
-                    style={{ width: `${progressPercent}%` }}
-                  />
+                <div className="p-4 rounded-2xl bg-muted/40 border border-border/60 space-y-2">
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    This community initiative has already taken place. Registrations are closed.
+                  </p>
+                  <div className="flex items-center gap-1.5 pt-1 text-xs font-semibold text-emerald-700 dark:text-emerald-300">
+                    <Users className="w-3.5 h-3.5" />
+                    <span>{joinedCount > 0 ? joinedCount : event.maxCapacity || 30}+ Volunteers Impacted</span>
+                  </div>
                 </div>
-                <div className="flex justify-between items-center text-[11px] text-muted-foreground mt-1.5">
-                  <span>{joinedCount} registered</span>
-                  <span>Goal: {capacity}</span>
+
+                <Link
+                  href="/events"
+                  className="w-full h-11 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs transition-all inline-flex items-center justify-center gap-1.5 shadow-xs"
+                >
+                  <span>Explore Upcoming Events</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
+
+                {/* Event Logistics Checklist */}
+                <div className="pt-4 border-t border-border/70 space-y-4">
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 mt-0.5">
+                      <Calendar className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground font-medium">Date Held</p>
+                      <p className="text-sm font-semibold text-foreground">
+                        {formattedDate}
+                      </p>
+                    </div>
+                  </div>
+
+                  {formattedTime && (
+                    <div className="flex items-start gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 mt-0.5">
+                        <Clock className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground font-medium">Time Held</p>
+                        <p className="text-sm font-semibold text-foreground">
+                          {formattedTime}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 mt-0.5">
+                      <MapPin className="w-4 h-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs text-muted-foreground font-medium">Location</p>
+                      <p className="text-sm font-semibold text-foreground leading-snug">
+                        {event.location}
+                      </p>
+                      <a
+                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                          event.location
+                        )}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400 hover:underline mt-1"
+                      >
+                        <span>Open in Maps</span>
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
+                    </div>
+                  </div>
                 </div>
               </div>
+            ) : (
+              /* Join / Status Action Box for Upcoming Events */
+              <div className="p-6 rounded-3xl bg-card border border-border shadow-md">
+                {/* Capacity Progress Bar */}
+                <div className="mb-6">
+                  <div className="flex items-center justify-between text-xs font-semibold mb-2">
+                    <span className="text-muted-foreground">Volunteer Capacity</span>
+                    <span className={isFull ? "text-rose-600 font-bold" : "text-emerald-600 dark:text-emerald-400"}>
+                      {isFull
+                        ? "Capacity Reached"
+                        : `${spotsRemaining} spot${spotsRemaining === 1 ? "" : "s"} left`}
+                    </span>
+                  </div>
 
-              {/* Organizer Alert Banner */}
-              {isOrganizer ? (
-                <div className="mb-5 p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800/80 text-amber-900 dark:text-amber-200">
-                  <div className="flex items-start gap-3">
-                    <ShieldAlert className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
-                    <div>
-                      <h4 className="text-sm font-bold">You Organized This Event</h4>
-                      <p className="text-xs text-amber-700 dark:text-amber-300/90 mt-1">
-                        As the organizer of this event, you cannot register as a volunteer for your own event. The join button below is disabled.
-                      </p>
-                    </div>
+                  <div className="h-2.5 w-full bg-muted rounded-full overflow-hidden">
+                    <div
+                      className={`h-full transition-all duration-500 rounded-full ${
+                        isFull
+                          ? "bg-rose-500"
+                          : "bg-linear-to-r from-emerald-500 to-teal-500"
+                      }`}
+                      style={{ width: `${progressPercent}%` }}
+                    />
+                  </div>
+                  <div className="flex justify-between items-center text-[11px] text-muted-foreground mt-1.5">
+                    <span>{joinedCount} registered</span>
+                    <span>Goal: {capacity}</span>
                   </div>
                 </div>
-              ) : isJoined ? (
-                <div className="mb-5 p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/80 text-emerald-900 dark:text-emerald-200">
-                  <div className="flex items-start gap-3">
-                    <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
-                    <div>
-                      <h4 className="text-sm font-bold">You are participating!</h4>
-                      <p className="text-xs text-emerald-700 dark:text-emerald-300/90 mt-1">
-                        Your volunteer registration for this event is confirmed. See you on event day!
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              ) : null}
 
-              {/* Action Buttons */}
-              <div className="space-y-3">
+                {/* Organizer Alert Banner */}
                 {isOrganizer ? (
-                  <div className="space-y-2.5">
-                    <Button
-                      disabled
-                      className="w-full h-12 rounded-2xl bg-muted text-muted-foreground font-semibold text-sm cursor-not-allowed border border-border opacity-70 select-none shadow-none"
-                      title="You are the organizer of this event and cannot join it"
-                    >
-                      <Ban className="w-4 h-4 mr-2 text-rose-500" />
-                      Join This Event (Disabled for Organizer)
-                    </Button>
-                    <p className="text-xs text-center text-amber-600 dark:text-amber-400 font-medium">
-                      Organizers cannot join their own event as a volunteer.
-                    </p>
-                    <Link
-                      href="/manage-events"
-                      className="inline-flex items-center justify-center gap-1.5 w-full text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:underline pt-1"
-                    >
-                      <span>Manage this event in dashboard</span>
-                      <ArrowRight className="w-3.5 h-3.5" />
-                    </Link>
+                  <div className="mb-5 p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800/80 text-amber-900 dark:text-amber-200">
+                    <div className="flex items-start gap-3">
+                      <ShieldAlert className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                      <div>
+                        <h4 className="text-sm font-bold">You Organized This Event</h4>
+                        <p className="text-xs text-amber-700 dark:text-amber-300/90 mt-1">
+                          As the organizer of this event, you cannot register as a volunteer for your own event. The join button below is disabled.
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 ) : isJoined ? (
-                  <Link
-                    href="/joined-events"
-                    className="w-full h-12 rounded-2xl border border-emerald-300 dark:border-emerald-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 font-semibold text-sm transition-all inline-flex items-center justify-center"
-                  >
-                    View My Joined Events →
-                  </Link>
-                ) : isFull ? (
-                  <Button
-                    disabled
-                    className="w-full h-12 rounded-2xl bg-muted text-muted-foreground font-semibold text-sm cursor-not-allowed"
-                  >
-                    <AlertCircle className="w-4 h-4 mr-2" />
-                    Event Capacity Full
-                  </Button>
-                ) : (
-                  <Button
-                    onClick={handleJoinEvent}
-                    disabled={isJoining}
-                    className="w-full h-12 rounded-2xl bg-linear-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-semibold text-base shadow-md hover:shadow-lg transition-all duration-200 group"
-                  >
-                    {isJoining ? (
-                      <>
-                        <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                        Joining Event...
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles className="w-4 h-4 mr-2 transition-transform group-hover:rotate-12" />
-                        Join This Event
-                      </>
-                    )}
-                  </Button>
-                )}
+                  <div className="mb-5 p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/80 text-emerald-900 dark:text-emerald-200">
+                    <div className="flex items-start gap-3">
+                      <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+                      <div>
+                        <h4 className="text-sm font-bold">You are participating!</h4>
+                        <p className="text-xs text-emerald-700 dark:text-emerald-300/90 mt-1">
+                          Your volunteer registration for this event is confirmed. See you on event day!
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ) : null}
 
-                {!session?.user && !isOrganizer && (
-                  <p className="text-[11px] text-center text-muted-foreground mt-2">
-                    Already an account holder? You will be prompted to sign in when joining.
-                  </p>
-                )}
-              </div>
-
-              {/* Event Logistics Checklist */}
-              <div className="mt-6 pt-6 border-t border-border/70 space-y-4">
-                <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 mt-0.5">
-                    <Calendar className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground font-medium">Date</p>
-                    <p className="text-sm font-semibold text-foreground">
-                      {formattedDate}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 mt-0.5">
-                    <Clock className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground font-medium">Time</p>
-                    <p className="text-sm font-semibold text-foreground">
-                      {formattedTime || "Scheduled Time"}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 mt-0.5">
-                    <MapPin className="w-4 h-4" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-xs text-muted-foreground font-medium">Location</p>
-                    <p className="text-sm font-semibold text-foreground leading-snug">
-                      {event.location}
-                    </p>
-                    <a
-                      href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-                        event.location
-                      )}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400 hover:underline mt-1"
+                {/* Action Buttons */}
+                <div className="space-y-3">
+                  {isOrganizer ? (
+                    <div className="space-y-2.5">
+                      <Button
+                        disabled
+                        className="w-full h-12 rounded-2xl bg-muted text-muted-foreground font-semibold text-sm cursor-not-allowed border border-border opacity-70 select-none shadow-none"
+                        title="You are the organizer of this event and cannot join it"
+                      >
+                        <Ban className="w-4 h-4 mr-2 text-rose-500" />
+                        Join This Event (Disabled for Organizer)
+                      </Button>
+                      <p className="text-xs text-center text-amber-600 dark:text-amber-400 font-medium">
+                        Organizers cannot join their own event as a volunteer.
+                      </p>
+                      <Link
+                        href="/manage-events"
+                        className="inline-flex items-center justify-center gap-1.5 w-full text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:underline pt-1"
+                      >
+                        <span>Manage this event in dashboard</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </Link>
+                    </div>
+                  ) : isJoined ? (
+                    <Link
+                      href="/joined-events"
+                      className="w-full h-12 rounded-2xl border border-emerald-300 dark:border-emerald-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 font-semibold text-sm transition-all inline-flex items-center justify-center"
                     >
-                      <span>Open in Maps</span>
-                      <ExternalLink className="w-3 h-3" />
-                    </a>
+                      View My Joined Events →
+                    </Link>
+                  ) : isFull ? (
+                    <Button
+                      disabled
+                      className="w-full h-12 rounded-2xl bg-muted text-muted-foreground font-semibold text-sm cursor-not-allowed"
+                    >
+                      <AlertCircle className="w-4 h-4 mr-2" />
+                      Event Capacity Full
+                    </Button>
+                  ) : (
+                    <Button
+                      onClick={handleJoinEvent}
+                      disabled={isJoining}
+                      className="w-full h-12 rounded-2xl bg-linear-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-semibold text-base shadow-md hover:shadow-lg transition-all duration-200 group"
+                    >
+                      {isJoining ? (
+                        <>
+                          <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                          Joining Event...
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="w-4 h-4 mr-2 transition-transform group-hover:rotate-12" />
+                          Join This Event
+                        </>
+                      )}
+                    </Button>
+                  )}
+
+                  {!session?.user && !isOrganizer && (
+                    <p className="text-[11px] text-center text-muted-foreground mt-2">
+                      Already an account holder? You will be prompted to sign in when joining.
+                    </p>
+                  )}
+                </div>
+
+                {/* Event Logistics Checklist */}
+                <div className="mt-6 pt-6 border-t border-border/70 space-y-4">
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 mt-0.5">
+                      <Calendar className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground font-medium">Date</p>
+                      <p className="text-sm font-semibold text-foreground">
+                        {formattedDate}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 mt-0.5">
+                      <Clock className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground font-medium">Time</p>
+                      <p className="text-sm font-semibold text-foreground">
+                        {formattedTime || "Scheduled Time"}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 mt-0.5">
+                      <MapPin className="w-4 h-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs text-muted-foreground font-medium">Location</p>
+                      <p className="text-sm font-semibold text-foreground leading-snug">
+                        {event.location}
+                      </p>
+                      <a
+                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                          event.location
+                        )}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400 hover:underline mt-1"
+                      >
+                        <span>Open in Maps</span>
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
+            )}
 
             {/* Organizer Card */}
             <div className="p-6 rounded-3xl bg-card border border-border shadow-xs">
