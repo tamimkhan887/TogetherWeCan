@@ -4,7 +4,7 @@ import { Suspense } from "react";
 
 const upcomingeventsdata = async () => {
   try {
-    const res = await fetch("http://localhost:8000/upcomingevents", {
+    const res = await fetch(`${process.env.BACKEND_URL}/upcomingevents`, {
       cache: "no-store",
     });
     if (!res.ok) {

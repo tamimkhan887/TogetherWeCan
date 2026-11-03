@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -26,6 +26,7 @@ import {
   Check,
   Sparkles,
 } from "lucide-react";
+
 import { authClient } from "@/lib/auth-client";
 
 const CATEGORIES: EventCategory[] = [
@@ -39,21 +40,49 @@ const CATEGORIES: EventCategory[] = [
 ];
 
 export default function CreateEventPage() {
-
-
   const { data: session } = authClient.useSession();
   const router = useRouter();
 
-  const handleCreateSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const [minDateTime, setMinDateTime] = useState("");
+
+  useEffect(() => {
+    const updateMinDateTime = () => {
+      const now = new Date();
+
+      const localDateTime = new Date(
+        now.getTime() - now.getTimezoneOffset() * 60000
+      )
+        .toISOString()
+        .slice(0, 16);
+
+      setMinDateTime(localDateTime);
+    };
+
+    updateMinDateTime();
+  }, []);
+
+  const handleCreateSubmit = async (
+    e: React.FormEvent<HTMLFormElement>
+  ) => {
     e.preventDefault();
-    const form = e.currentTarget
+
+    const form = e.currentTarget;
     const formData = new FormData(form);
+
+    const eventDate = formData.get("date") as string;
+
+    if (!eventDate || new Date(eventDate).getTime() <= Date.now()) {
+      toast.error("Invalid Event Date", {
+        description: "Please select a future date and time.",
+      });
+      return;
+    }
 
     const created = {
       title: formData.get("title") as string,
       image: formData.get("image") as string,
       category: formData.get("category") as EventCategory,
-      date: formData.get("date") as string,
+      date: eventDate,
       location: formData.get("location") as string,
       maxCapacity: Number(formData.get("maxCapacity")) || undefined,
       description: formData.get("description") as string,
@@ -63,7 +92,7 @@ export default function CreateEventPage() {
     };
 
     try {
-      const res = await fetch("http://localhost:8000/upcomingevents", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/upcomingevents`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -80,14 +109,16 @@ export default function CreateEventPage() {
       toast.success("Event Created Successfully!", {
         description: `"${created.title}" has been published.`,
       });
-      form.reset()
-      router.push("/manage-events");
+
+      form.reset();
+      router.push("/events");
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "Something went wrong!"
       );
     }
   };
+
   return (
     <div className="min-h-screen pb-20">
       <PageHeader
@@ -98,7 +129,6 @@ export default function CreateEventPage() {
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 max-w-4xl">
         <form onSubmit={handleCreateSubmit} className="space-y-8">
-
           <div className="space-y-6 bg-card border border-border/80 rounded-2xl p-6 sm:p-8 shadow-xs">
             <h3 className="text-lg font-bold text-foreground border-b border-border/60 pb-3 flex items-center gap-2">
               <Sparkles className="h-5 w-5 text-emerald-600" />
@@ -159,8 +189,9 @@ export default function CreateEventPage() {
                 <Input
                   name="date"
                   type="datetime-local"
-                  min="2026-11-01T00:00"
+                  min={minDateTime}
                   required
+                  disabled={!minDateTime}
                 />
               </div>
             </div>
@@ -221,13 +252,13 @@ export default function CreateEventPage() {
 
             <Button
               type="submit"
+              disabled={!minDateTime}
               className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white px-8 h-11 shadow-md"
             >
               <Check className="h-4 w-4 mr-1.5" />
               Publish Event
             </Button>
           </div>
-
         </form>
       </div>
     </div>
