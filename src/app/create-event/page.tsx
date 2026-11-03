@@ -46,8 +46,8 @@ export default function CreateEventPage() {
 
   const handleCreateSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
-    const formData = new FormData(e.currentTarget);
+    const form = e.currentTarget
+    const formData = new FormData(form);
 
     const created = {
       title: formData.get("title") as string,
@@ -80,7 +80,7 @@ export default function CreateEventPage() {
       toast.success("Event Created Successfully!", {
         description: `"${created.title}" has been published.`,
       });
-
+      form.reset()
       router.push("/manage-events");
     } catch (error) {
       toast.error(

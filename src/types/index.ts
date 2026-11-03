@@ -6,24 +6,19 @@ export type EventCategory =
   | "Healthcare"
   | "Community Support"
   | "Other";
-
-export interface Event {
-  id: string;
+export interface EventTypes {
+  _id: string;
   title: string;
-  description: string;
-  category: EventCategory;
   image: string;
+  category: string;
+  date: string;
   location: string;
-  date: string; // ISO date string or YYYY-MM-DD
+  maxCapacity: number;
+  description: string;
   organizerName: string;
   organizerEmail: string;
-  organizerAvatar: string;
-  participantCount: number;
-  maxCapacity?: number;
-  createdBy: string;
-  featured?: boolean;
-  status?: "upcoming" | "completed" | "cancelled";
-}
+  organizerAvatar: string
+};
 
 export interface User {
   id: string;

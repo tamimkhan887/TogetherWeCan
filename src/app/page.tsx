@@ -5,13 +5,14 @@ import { HowItWorks } from "@/components/home/how-it-works";
 import { CommunityGallery } from "@/components/home/community-gallery";
 import { CtaSection } from "@/components/home/cta-section";
 import { NewsletterSection } from "@/components/home/newsletter-section";
+import SingleEvent from "@/components/events/SingleEvent";
 
 export default function HomePage() {
   return (
     <div className="flex flex-col min-h-screen">
       <HeroSection />
       <FeaturesSection />
-      <RecentUpcomingEvents />
+      {/* <SingleEvent></SingleEvent> */}
       <HowItWorks />
       <CommunityGallery />
       <CtaSection />
