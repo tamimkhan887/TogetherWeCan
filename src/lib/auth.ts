@@ -6,9 +6,28 @@ import { jwt } from "better-auth/plugins";
 const client = new MongoClient(process.env.MONGODB_URL as string);
 const db = client.db("TogetherWeCan");
 
+function sanitizeUrl(url?: string): string | undefined {
+  if (!url) return undefined;
+  let cleaned = url.trim();
+  const mdMatch = cleaned.match(/https?:\/\/[^\s\)]+/);
+  if (mdMatch) {
+    cleaned = mdMatch[0];
+  }
+  if (!cleaned.startsWith("http://") && !cleaned.startsWith("https://")) {
+    cleaned = `https://${cleaned}`;
+  }
+  try {
+    new URL(cleaned);
+    return cleaned;
+  } catch {
+    return undefined;
+  }
+}
+
 const getBaseUrl = () => {
-  if (process.env.BETTER_AUTH_URL && !process.env.BETTER_AUTH_URL.includes("localhost")) {
-    return process.env.BETTER_AUTH_URL;
+  const customUrl = sanitizeUrl(process.env.BETTER_AUTH_URL);
+  if (customUrl && !customUrl.includes("localhost")) {
+    return customUrl;
   }
   if (process.env.VERCEL_PROJECT_PRODUCTION_URL) {
     return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`;
@@ -16,7 +35,7 @@ const getBaseUrl = () => {
   if (process.env.VERCEL_URL) {
     return `https://${process.env.VERCEL_URL}`;
   }
-  return process.env.BETTER_AUTH_URL || "http://localhost:3000";
+  return customUrl || "http://localhost:3000";
 };
 
 export const auth = betterAuth({
