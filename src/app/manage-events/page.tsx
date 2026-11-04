@@ -6,36 +6,36 @@ import { Suspense } from "react";
 import { connection } from "next/server";
 
 async function ManageEventsData() {
+  await connection();
+
+  const headersList = await headers();
+  const session = await auth.api.getSession({
+    headers: headersList,
+  });
+
+  const emailUser = session?.user?.email;
+
+  if (!emailUser) {
+    return <ManageEventGrid manageventsdata={[]} />;
+  }
+
+  const response = await auth.api.getToken({
+    headers: headersList,
+  });
+
+  const token = response?.token;
+
+  const backendUrl =
+    process.env.BACKEND_URL ||
+    process.env.NEXT_PUBLIC_BACKEND_URL ||
+    "http://localhost:8000";
+
   try {
-    await connection();
-
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
-
-    const emailUser = session?.user?.email;
-
-    if (!emailUser) {
-      return <ManageEventGrid manageventsdata={[]} />;
-    }
-
-    const response = await auth.api.getToken({
-      headers: await headers(),
-    });
-
-    const token = response?.token
-    console.log((token))
-
-    const backendUrl =
-      process.env.BACKEND_URL ||
-      process.env.NEXT_PUBLIC_BACKEND_URL ||
-      "http://localhost:8000";
-
     const res = await fetch(
       `${backendUrl}/upcomingevents/${encodeURIComponent(emailUser)}`,
       {
         headers: {
-          authorization: `Bearer ${token}`,
+          ...(token ? { authorization: `Bearer ${token}` } : {}),
         },
         cache: "no-store",
       }
