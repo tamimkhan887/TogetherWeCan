@@ -6,7 +6,7 @@
 
 ## 🌐 Live URLs
 
-- **Client Live Website:** [https://together-we-can.vercel.app](https://together-we-can.vercel.app)
+- **Client Live Website:** [https://together-we-can-seven.vercel.app](https://together-we-can-seven.vercel.app)
 - **Server API (Vercel):** [https://together-we-can-server.vercel.app](https://together-we-can-server.vercel.app)
 - **GitHub Repository:** [https://github.com/tamimkhan887/TogetherWeCan](https://github.com/tamimkhan887/TogetherWeCan)
 

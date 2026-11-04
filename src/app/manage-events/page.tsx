@@ -42,7 +42,12 @@ async function ManageEventsData() {
     );
 
     if (!res.ok) {
-      throw new Error("Failed to fetch manage events");
+      const errorText = await res.text().catch(() => "");
+      console.error(
+        `Failed to fetch manage events (Status ${res.status}):`,
+        errorText
+      );
+      return <ManageEventGrid manageventsdata={[]} />;
     }
 
     const data = await res.json();

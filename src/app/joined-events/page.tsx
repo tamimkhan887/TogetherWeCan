@@ -10,12 +10,12 @@ import { Lock, ArrowRight } from "lucide-react";
 async function JoinedEventsData() {
   await connection();
 
+  const headersList = await headers();
   const session = await auth.api.getSession({
-    headers: await headers(),
+    headers: headersList,
   });
 
   const emailUser = session?.user?.email;
-
 
   if (!emailUser) {
     return (
@@ -44,10 +44,10 @@ async function JoinedEventsData() {
     "http://localhost:8000";
 
   const response = await auth.api.getToken({
-    headers: await headers(),
+    headers: headersList,
   });
 
-  const token = response?.token
+  const token = response?.token;
 
   let events = [];
   try {
@@ -55,7 +55,7 @@ async function JoinedEventsData() {
       `${backendUrl}/joinedevents/${encodeURIComponent(emailUser)}`,
       {
         headers: {
-          authorization: `Bearer ${token}`,
+          ...(token ? { authorization: `Bearer ${token}` } : {}),
         },
         cache: "no-store",
         next: { revalidate: 0 },

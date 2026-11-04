@@ -4,6 +4,7 @@ import { useState, useMemo, useEffect, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { toast } from "sonner";
+import { authClient } from "@/lib/auth-client";
 import { UserJoinedEvent } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -81,9 +82,20 @@ export default function JoinedEventsClient({
 
     try {
       setIsRefreshing(true);
+      const tokenRes = await authClient.token().catch(() => null);
+      const token = tokenRes?.data?.token;
+
+      const headers: HeadersInit = {};
+      if (token) {
+        headers["authorization"] = `Bearer ${token}`;
+      }
+
       const res = await fetch(
         `${backendUrl}/joinedevents/${encodeURIComponent(userEmail)}`,
-        { cache: "no-store" }
+        {
+          headers,
+          cache: "no-store",
+        }
       );
       if (res.ok) {
         const data = await res.json();
