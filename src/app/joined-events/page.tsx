@@ -16,6 +16,7 @@ async function JoinedEventsData() {
 
   const emailUser = session?.user?.email;
 
+
   if (!emailUser) {
     return (
       <div className="max-w-md mx-auto my-20 p-8 rounded-3xl bg-card border border-border text-center shadow-md">
@@ -42,11 +43,20 @@ async function JoinedEventsData() {
     process.env.NEXT_PUBLIC_BACKEND_URL ||
     "http://localhost:8000";
 
+  const response = await auth.api.getToken({
+    headers: await headers(),
+  });
+
+  const token = response?.token
+
   let events = [];
   try {
     const res = await fetch(
       `${backendUrl}/joinedevents/${encodeURIComponent(emailUser)}`,
       {
+        headers: {
+          authorization: `Bearer ${token}`,
+        },
         cache: "no-store",
         next: { revalidate: 0 },
       }

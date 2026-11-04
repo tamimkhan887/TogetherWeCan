@@ -90,11 +90,13 @@ export default function CreateEventPage() {
       organizerEmail: session?.user.email || "",
       organizerAvatar: session?.user.image || "",
     };
-
+    const { data, error } = await authClient.token()
+    const jwtToken = data?.token
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/upcomingevents`, {
         method: "POST",
         headers: {
+          authorization: `Bearer ${jwtToken}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify(created),

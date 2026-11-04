@@ -19,6 +19,13 @@ async function ManageEventsData() {
       return <ManageEventGrid manageventsdata={[]} />;
     }
 
+    const response = await auth.api.getToken({
+      headers: await headers(),
+    });
+
+    const token = response?.token
+    console.log((token))
+
     const backendUrl =
       process.env.BACKEND_URL ||
       process.env.NEXT_PUBLIC_BACKEND_URL ||
@@ -27,6 +34,9 @@ async function ManageEventsData() {
     const res = await fetch(
       `${backendUrl}/upcomingevents/${encodeURIComponent(emailUser)}`,
       {
+        headers: {
+          authorization: `Bearer ${token}`,
+        },
         cache: "no-store",
       }
     );
