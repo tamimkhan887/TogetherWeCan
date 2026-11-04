@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -31,6 +31,8 @@ import {
   CalendarCheck,
   UserCheck,
   ArrowRight,
+  ArrowUpDown,
+  RotateCw,
 } from "lucide-react";
 
 interface JoinedEventsClientProps {
@@ -38,11 +40,15 @@ interface JoinedEventsClientProps {
   userEmail: string;
 }
 
+type SortOrder = "soonest" | "latest" | "recently-joined";
+
 export default function JoinedEventsClient({
   initialEvents,
   userEmail,
 }: JoinedEventsClientProps) {
   const [events, setEvents] = useState<UserJoinedEvent[]>(initialEvents);
+  const [sortOrder, setSortOrder] = useState<SortOrder>("soonest");
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Cancellation modal state
   const [deleteEvent, setDeleteEvent] = useState<UserJoinedEvent | null>(null);
@@ -61,16 +67,79 @@ export default function JoinedEventsClient({
     }
   };
 
-  // Split into Upcoming and Past events
-  const upcomingEvents = useMemo(
-    () => events.filter((e) => isUpcoming(e.eventDate)),
-    [events]
-  );
+  // Sync state if initialEvents prop changes
+  useEffect(() => {
+    if (initialEvents && Array.isArray(initialEvents)) {
+      setEvents(initialEvents);
+    }
+  }, [initialEvents]);
 
-  const pastEvents = useMemo(
-    () => events.filter((e) => !isUpcoming(e.eventDate)),
-    [events]
-  );
+  // Client-side auto-refresh on mount & window focus
+  // Ensures newly added events appear instantly without needing a full browser reload
+  const fetchJoinedEvents = useCallback(async () => {
+    if (!userEmail) return;
+
+    try {
+      setIsRefreshing(true);
+      const res = await fetch(
+        `${backendUrl}/joinedevents/${encodeURIComponent(userEmail)}`,
+        { cache: "no-store" }
+      );
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          setEvents(data);
+        }
+      }
+    } catch (err) {
+      console.error("Error refreshing joined events:", err);
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [backendUrl, userEmail]);
+
+  useEffect(() => {
+    fetchJoinedEvents();
+
+    const handleFocus = () => {
+      fetchJoinedEvents();
+    };
+
+    window.addEventListener("focus", handleFocus);
+    return () => window.removeEventListener("focus", handleFocus);
+  }, [fetchJoinedEvents]);
+
+  // Split into Upcoming and Past events with sorted order
+  const upcomingEvents = useMemo(() => {
+    return events
+      .filter((e) => isUpcoming(e.eventDate))
+      .sort((a, b) => {
+        if (sortOrder === "latest") {
+          return new Date(b.eventDate).getTime() - new Date(a.eventDate).getTime();
+        }
+        if (sortOrder === "recently-joined") {
+          return new Date(b.joinedAt || 0).getTime() - new Date(a.joinedAt || 0).getTime();
+        }
+        // Default: "soonest" (closest upcoming event first)
+        return new Date(a.eventDate).getTime() - new Date(b.eventDate).getTime();
+      });
+  }, [events, sortOrder]);
+
+  const pastEvents = useMemo(() => {
+    return events
+      .filter((e) => !isUpcoming(e.eventDate))
+      .sort((a, b) => {
+        if (sortOrder === "soonest") {
+          // Oldest past event first
+          return new Date(a.eventDate).getTime() - new Date(b.eventDate).getTime();
+        }
+        if (sortOrder === "recently-joined") {
+          return new Date(b.joinedAt || 0).getTime() - new Date(a.joinedAt || 0).getTime();
+        }
+        // Default: most recently concluded event first
+        return new Date(b.eventDate).getTime() - new Date(a.eventDate).getTime();
+      });
+  }, [events, sortOrder]);
 
   // Handle Cancel Participation
   const handleConfirmCancel = async () => {
@@ -257,7 +326,7 @@ export default function JoinedEventsClient({
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-12">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-8">
       {/* Page Header */}
       <div className="relative rounded-3xl bg-linear-to-r from-emerald-900 via-emerald-800 to-teal-900 text-white p-8 sm:p-12 overflow-hidden shadow-lg border border-emerald-700/40">
         <div className="absolute -right-12 -top-12 w-64 h-64 rounded-full bg-emerald-500/10 blur-3xl" />
@@ -302,6 +371,65 @@ export default function JoinedEventsClient({
         </div>
       </div>
 
+      {/* Sorting & Live Sync Bar */}
+      {events.length > 0 && (
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3.5 sm:p-4 rounded-2xl bg-card border border-border shadow-xs">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5 mr-1">
+              <ArrowUpDown className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+              Sort Events:
+            </span>
+
+            <div className="inline-flex rounded-xl bg-muted/60 p-1 border border-border/60">
+              <button
+                type="button"
+                onClick={() => setSortOrder("soonest")}
+                className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all ${
+                  sortOrder === "soonest"
+                    ? "bg-white dark:bg-card text-emerald-700 dark:text-emerald-300 shadow-xs"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                Soonest Date First
+              </button>
+              <button
+                type="button"
+                onClick={() => setSortOrder("latest")}
+                className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all ${
+                  sortOrder === "latest"
+                    ? "bg-white dark:bg-card text-emerald-700 dark:text-emerald-300 shadow-xs"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                Furthest Date First
+              </button>
+              <button
+                type="button"
+                onClick={() => setSortOrder("recently-joined")}
+                className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all ${
+                  sortOrder === "recently-joined"
+                    ? "bg-white dark:bg-card text-emerald-700 dark:text-emerald-300 shadow-xs"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                Recently Joined
+              </button>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => fetchJoinedEvents()}
+            disabled={isRefreshing}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium text-muted-foreground hover:text-foreground bg-muted/40 hover:bg-muted border border-border/60 transition-colors disabled:opacity-50 self-end sm:self-auto cursor-pointer"
+            title="Check for newly joined events"
+          >
+            <RotateCw className={`w-3.5 h-3.5 ${isRefreshing ? "animate-spin text-emerald-600 dark:text-emerald-400" : ""}`} />
+            <span>{isRefreshing ? "Syncing..." : "Sync Latest"}</span>
+          </button>
+        </div>
+      )}
+
       {/* Main View: Empty state or Upcoming & Past sections */}
       {events.length === 0 ? (
         <div className="text-center py-16 px-4 bg-card rounded-3xl border border-dashed border-border shadow-xs">
@@ -334,7 +462,7 @@ export default function JoinedEventsClient({
                 <div>
                   <h2 className="text-2xl font-bold text-foreground">Upcoming Events</h2>
                   <p className="text-xs sm:text-sm text-muted-foreground">
-                    Events scheduled for upcoming dates
+                    Events scheduled for upcoming dates (Sorted by date)
                   </p>
                 </div>
               </div>

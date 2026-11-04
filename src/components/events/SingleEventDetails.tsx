@@ -233,6 +233,7 @@ export default function SingleEventDetails({ event }: SingleEventDetailsProps) {
       // Successfully joined
       setIsJoined(true);
       setAttendees((prev) => [...prev, joinPayload]);
+      router.refresh();
       toast.success("Successfully Joined! 🎉", {
         description: `You are now a registered volunteer for "${event.title}".`,
       });

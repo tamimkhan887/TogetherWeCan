@@ -48,6 +48,7 @@ async function JoinedEventsData() {
       `${backendUrl}/joinedevents/${encodeURIComponent(emailUser)}`,
       {
         cache: "no-store",
+        next: { revalidate: 0 },
       }
     );
     if (res.ok) {

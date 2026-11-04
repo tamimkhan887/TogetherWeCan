@@ -52,6 +52,8 @@ export default function RegisterPage() {
     }
     if (user.password.length < 8) {
       newErrors.password = "Password must be at least 8 characters.";
+    } else if (!/[A-Z]/.test(user.password)) {
+      newErrors.password = "Password must contain an uppercase letter (A-Z).";
     } else if (!/[a-z]/.test(user.password)) {
       newErrors.password = "Password must contain a lowercase letter (a-z).";
     } else if (!/[0-9]/.test(user.password)) {
