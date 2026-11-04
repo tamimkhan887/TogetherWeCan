@@ -93,7 +93,7 @@ export default function CreateEventPage() {
     const { data, error } = await authClient.token()
     const jwtToken = data?.token
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/upcomingevents`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000"}/upcomingevents`, {
         method: "POST",
         headers: {
           authorization: `Bearer ${jwtToken}`,
